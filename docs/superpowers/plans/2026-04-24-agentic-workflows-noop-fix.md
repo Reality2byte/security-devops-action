@@ -4,7 +4,9 @@
 
 **Goal:** Stop the three gh-aw agentic workflows from filing false-positive `[aw] ... failed` issues that page the on-call IcM rotation.
 
-**Architecture:** For all three agentic workflows, set `safe-outputs.noop: true` (lets the agent explicitly signal "nothing to do") and `safe-outputs.report-failure-as-issue: false` (blocks the auto-filed failure issue even when no output is produced). Update the `msdo-issue-assistant` prompt so its existing "Don't respond if" rules now direct the agent to call the `noop` tool explicitly. Regenerate the three `.lock.yml` files with `gh aw compile` and ship everything in one PR.
+**Architecture:** For all three agentic workflows, enable the `noop` safe output with `report-as-issue: false` (lets the agent explicitly signal "nothing to do" without itself filing an issue) and set `safe-outputs.report-failure-as-issue: false` (blocks the auto-filed failure issue even when no output is produced). Update the `msdo-issue-assistant` prompt so its "don't respond" rules now direct the agent to call the `noop` tool explicitly. Regenerate the three `.lock.yml` files with `gh aw compile` and ship everything in one PR.
+
+> **Note on syntax:** gh-aw v0.61.0 rejects `noop: true` as a boolean. The correct YAML shape is an object: `noop:\n    report-as-issue: false`. All YAML blocks below use that shape. If you see `noop: true` anywhere, the compile will fail with "value must be false. Expected format: {...}".
 
 **Tech Stack:** GitHub Actions, gh-aw CLI v0.61.0, YAML, Markdown prompts.
 
@@ -77,7 +79,8 @@ With:
 
 ```yaml
 safe-outputs:
-  noop: true
+  noop:
+    report-as-issue: false
   report-failure-as-issue: false
   create-issue:
     max: 1
@@ -87,19 +90,20 @@ safe-outputs:
   create-pull-request: null
 ```
 
-The only changes are `noop: false` → `noop: true` and inserting `report-failure-as-issue: false` as the second key.
+Changes: `noop: false` replaced with the `noop:\n    report-as-issue: false` object form (enables the noop tool without having it file its own issue), plus `report-failure-as-issue: false` inserted as the next key.
 
 - [ ] **Step 2: Verify the edit**
 
 Run:
 ```bash
-grep -nE "noop|report-failure-as-issue" .github/workflows/ci-doctor.md
+grep -nE "noop|report-failure-as-issue|report-as-issue" .github/workflows/ci-doctor.md
 ```
 
 Expected output:
 ```
-33:  noop: true
-34:  report-failure-as-issue: false
+33:  noop:
+34:    report-as-issue: false
+35:  report-failure-as-issue: false
 ```
 
 ---
@@ -126,7 +130,8 @@ With:
 
 ```yaml
 safe-outputs:
-  noop: true
+  noop:
+    report-as-issue: false
   report-failure-as-issue: false
   create-issue:
     max: 1
@@ -134,19 +139,20 @@ safe-outputs:
     allowed: [security-breach, supply-chain, toolchain-alert, critical, high, medium]
 ```
 
-Only changes are `noop: false` → `noop: true` and inserting `report-failure-as-issue: false`.
+Changes: `noop: false` replaced with the `noop:\n    report-as-issue: false` object form, plus `report-failure-as-issue: false` inserted as the next key.
 
 - [ ] **Step 2: Verify the edit**
 
 Run:
 ```bash
-grep -nE "noop|report-failure-as-issue" .github/workflows/msdo-breach-monitor.md
+grep -nE "noop|report-failure-as-issue|report-as-issue" .github/workflows/msdo-breach-monitor.md
 ```
 
 Expected output:
 ```
-42:  noop: true
-43:  report-failure-as-issue: false
+42:  noop:
+43:    report-as-issue: false
+44:  report-failure-as-issue: false
 ```
 
 ---
@@ -173,7 +179,8 @@ With:
 
 ```yaml
 safe-outputs:
-  noop: true
+  noop:
+    report-as-issue: false
   report-failure-as-issue: false
   add-comment:
     max: 4
@@ -181,19 +188,20 @@ safe-outputs:
     allowed: ["type:bug", "type:feature", "type:docs", "type:question", "type:security", "type:maintenance", "status:triage", "status:waiting-on-author", "status:repro-needed", "status:team-review", "area:action", "area:msdo-cli", "area:ci", "area:container-mapping"]
 ```
 
-Only changes are `noop: false` → `noop: true` and inserting `report-failure-as-issue: false`.
+Changes: `noop: false` replaced with the `noop:\n    report-as-issue: false` object form, plus `report-failure-as-issue: false` inserted as the next key.
 
 - [ ] **Step 2: Verify the edit**
 
 Run:
 ```bash
-grep -nE "noop|report-failure-as-issue" .github/workflows/msdo-issue-assistant.md
+grep -nE "noop|report-failure-as-issue|report-as-issue" .github/workflows/msdo-issue-assistant.md
 ```
 
-Expected output:
+Expected output (the first three lines — additional matches will appear later in the file inside the prompt text):
 ```
-33:  noop: true
-34:  report-failure-as-issue: false
+33:  noop:
+34:    report-as-issue: false
+35:  report-failure-as-issue: false
 ```
 
 ---
@@ -381,7 +389,7 @@ gh pr create \
   --title "fix(ci): enable noop on agentic workflows to stop IcM page spam" \
   --body "$(cat <<'EOF'
 ## Summary
-- Sets `safe-outputs.noop: true` on all three agentic workflows so the agent can explicitly signal "nothing to do" instead of exiting silent.
+- Enables `safe-outputs.noop` (with `report-as-issue: false`) on all three agentic workflows so the agent can explicitly signal "nothing to do" instead of exiting silent.
 - Sets `safe-outputs.report-failure-as-issue: false` so edge-case silent exits no longer file `[aw] ... failed` issues that page the IcM on-call rotation.
 - Updates the `msdo-issue-assistant` prompt to call `noop` in its existing "don't respond" conditions and to recognise auto-generated `[aw]` failure issues.
 
