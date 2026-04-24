@@ -1,6 +1,12 @@
 ---
 # MSDO Issue Assistant - GitHub Agentic Workflow
 # Automatically triage and respond to issues using wiki knowledge
+#
+# MAINTENANCE NOTE: after running `gh aw compile` with gh-aw v0.61.0, verify
+# that the `actions/github-script` SHA in the generated .lock.yml stays pinned
+# to v9.0.0 (`3a2844b7e9c422d3c10d287c895573f7108da1b3`). v0.61.0's bundled
+# scaffolding emits the older v8 SHA and would silently revert PR #244. See
+# PR #252 for context.
 
 on:
   issues:
@@ -201,7 +207,7 @@ Keep responses:
 **User reports:** "Trivy is failing with container image not found"
 **Response:** This error typically occurs when Docker isn't available. Trivy requires Docker for container scanning. Please ensure you have `docker/setup-buildx-action@v3` in your workflow before the MSDO action. Can you share your workflow YAML so I can help verify the configuration?
 
-## Do NOT Respond Examples
+## Noop Examples
 
 **Off-topic issue:** "How do I set up GitHub Actions for deploying to AWS?"
 → Call `noop` with reason "off-topic — unrelated to MSDO".

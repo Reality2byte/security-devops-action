@@ -8,6 +8,10 @@
 
 > **Note on syntax:** gh-aw v0.61.0 rejects `noop: true` as a boolean. The correct YAML shape is an object: `noop:\n    report-as-issue: false`. All YAML blocks below use that shape. If you see `noop: true` anywhere, the compile will fail with "value must be false. Expected format: {...}".
 
+> **Post-implementation addenda (for traceability):**
+> - The `gh aw compile` step with v0.61.0 silently downgrades `actions/github-script` from v9.0.0 (per PR #244) back to v8. The v9.0.0 SHA (`3a2844b7e9c422d3c10d287c895573f7108da1b3`) was restored via sed after compile. A maintenance note to this effect is embedded as a YAML comment at the top of each `.md` source file.
+> - A second commit (after the initial review) extended the `msdo-issue-assistant` prompt edits beyond what Tasks 5-6 specified: rule 3 was updated to redirect to rule 4, and the four pre-existing "Do NOT Respond Examples" arrows were changed from "→ Do not respond" to "→ Call `noop` with reason ...". The `## Do NOT Respond Examples` heading was also renamed to `## Noop Examples`. These changes eliminated an internal contradiction between rule 3 and rule 4 and made the examples match the new noop-centric behaviour. They are not reflected in the task descriptions below.
+
 **Tech Stack:** GitHub Actions, gh-aw CLI v0.61.0, YAML, Markdown prompts.
 
 **Spec:** [docs/superpowers/specs/2026-04-24-agentic-workflows-noop-fix-design.md](../specs/2026-04-24-agentic-workflows-noop-fix-design.md)

@@ -21,7 +21,7 @@
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
 #
-# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"ccb5fde04f4c7256d8b743110bed1df58ef26d32a932c77575344a90eab7943a","compiler_version":"v0.61.0","strict":true}
+# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"73ddd2b5a2fc15ff120245519bd10f342dd3d1a0925df30be6453378664b4c29","compiler_version":"v0.61.0","strict":true}
 
 name: "MSDO Toolchain Breach Monitor"
 "on":

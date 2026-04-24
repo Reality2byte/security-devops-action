@@ -21,7 +21,7 @@
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
 #
-# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"fe5e4a384d919733e6f15f7f5c94214a34a50028234b069e4f38e860c2a37977","compiler_version":"v0.61.0","strict":true}
+# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"e0a10012ec11f9360eb65d497093ec0ba53c0a1f14cfbb5e21200dcc08055474","compiler_version":"v0.61.0","strict":true}
 
 name: "CI Doctor"
 "on":

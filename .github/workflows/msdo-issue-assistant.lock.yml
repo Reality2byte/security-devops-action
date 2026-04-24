@@ -21,7 +21,7 @@
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
 #
-# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"1dced2a7773143b01044e0ace3fa6b13dc03efadb64e0bad57014801b6e3fa94","compiler_version":"v0.61.0","strict":true}
+# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"ad862ac3404b6a5b9235e75266770d3df954d43cd43d766661be878e414e622b","compiler_version":"v0.61.0","strict":true}
 
 name: "MSDO Issue Triage Assistant"
 "on":
