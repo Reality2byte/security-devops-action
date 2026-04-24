@@ -39,7 +39,9 @@ tools:
       - registry.npmjs.org
 
 safe-outputs:
-  noop: false
+  noop:
+    report-as-issue: false
+  report-failure-as-issue: false
   create-issue:
     max: 1
   add-labels:

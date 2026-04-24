@@ -30,7 +30,9 @@ tools:
       - raw.githubusercontent.com
 
 safe-outputs:
-  noop: false
+  noop:
+    report-as-issue: false
+  report-failure-as-issue: false
   add-comment:
     max: 4
   add-labels:
@@ -179,11 +181,12 @@ Keep responses:
    - docs.microsoft.com
    - aka.ms
 3. **Stay on topic** - Only respond to issues related to MSDO, security-devops-action, or the supported security tools. If an issue is unrelated (e.g. general GitHub Actions questions, unrelated security tools, off-topic discussions), do not respond.
-4. **Don't respond** if:
+4. **Call `noop` instead of staying silent** when any of these apply. Pass a one-line reason so the decision is auditable:
    - The issue is not related to MSDO or security-devops-action
+   - The issue title starts with `[aw]` or is labeled `agentic-workflows` (auto-generated failure reports, not user issues)
    - The issue is closed
    - The commenter is not the issue author (unless it's a new issue)
-   - You've already responded twice and there is no new technical information in the latest user message
+   - You have already responded twice and there is no new technical information in the latest user message
    - The issue has a `status:team-review` label (a maintainer is handling it)
 5. **Be honest** - if you don't know something, say so and suggest checking the wiki or waiting for a maintainer
 
@@ -211,3 +214,6 @@ Keep responses:
 
 **Non-author comment on existing issue:** A third party comments "I have the same problem."
 → Do not respond. The commenter is not the issue author.
+
+**Workflow failure issue (auto-generated):** Title starts with `[aw]` (e.g. "[aw] MSDO Issue Triage Assistant failed") or labeled `agentic-workflows`.
+→ Call `noop` with reason "auto-generated failure report, not a user issue".
