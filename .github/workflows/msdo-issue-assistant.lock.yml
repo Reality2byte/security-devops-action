@@ -21,7 +21,7 @@
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
 #
-# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"b9853605bc6fd41a4d81ec4728106d1ffdc01e2dbcf460d6aaea1620c94a3367","compiler_version":"v0.61.0","strict":true}
+# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"ad862ac3404b6a5b9235e75266770d3df954d43cd43d766661be878e414e622b","compiler_version":"v0.61.0","strict":true}
 
 name: "MSDO Issue Triage Assistant"
 "on":
@@ -141,7 +141,7 @@ jobs:
           cat "/opt/gh-aw/prompts/safe_outputs_prompt.md"
           cat << 'GH_AW_PROMPT_EOF'
           <safe-output-tools>
-          Tools: add_comment, add_labels, missing_tool, missing_data
+          Tools: add_comment, add_labels, missing_tool, missing_data, noop
           </safe-output-tools>
           <github-context>
           The following GitHub context information is available for this workflow:
@@ -336,7 +336,7 @@ jobs:
           mkdir -p /tmp/gh-aw/safeoutputs
           mkdir -p /tmp/gh-aw/mcp-logs/safeoutputs
           cat > /opt/gh-aw/safeoutputs/config.json << 'GH_AW_SAFE_OUTPUTS_CONFIG_EOF'
-          {"add_comment":{"max":4},"add_labels":{"allowed":["type:bug","type:feature","type:docs","type:question","type:security","type:maintenance","status:triage","status:waiting-on-author","status:repro-needed","status:team-review","area:action","area:msdo-cli","area:ci","area:container-mapping"],"max":3},"missing_data":{},"missing_tool":{}}
+          {"add_comment":{"max":4},"add_labels":{"allowed":["type:bug","type:feature","type:docs","type:question","type:security","type:maintenance","status:triage","status:waiting-on-author","status:repro-needed","status:team-review","area:action","area:msdo-cli","area:ci","area:container-mapping"],"max":3},"missing_data":{},"missing_tool":{},"noop":{"max":1}}
           GH_AW_SAFE_OUTPUTS_CONFIG_EOF
       - name: Write Safe Outputs Tools
         run: |
@@ -432,6 +432,17 @@ jobs:
                   "type": "string",
                   "sanitize": true,
                   "maxLength": 128
+                }
+              }
+            },
+            "noop": {
+              "defaultMax": 1,
+              "fields": {
+                "message": {
+                  "required": true,
+                  "type": "string",
+                  "sanitize": true,
+                  "maxLength": 65000
                 }
               }
             }
@@ -860,6 +871,7 @@ jobs:
       group: "gh-aw-conclusion-msdo-issue-assistant"
       cancel-in-progress: false
     outputs:
+      noop_message: ${{ steps.noop.outputs.noop_message }}
       tools_reported: ${{ steps.missing_tool.outputs.tools_reported }}
       total_count: ${{ steps.missing_tool.outputs.total_count }}
     steps:
@@ -880,6 +892,20 @@ jobs:
           mkdir -p /tmp/gh-aw/
           find "/tmp/gh-aw/" -type f -print
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/agent_output.json" >> "$GITHUB_ENV"
+      - name: Process No-Op Messages
+        id: noop
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
+          GH_AW_NOOP_MAX: "1"
+          GH_AW_WORKFLOW_NAME: "MSDO Issue Triage Assistant"
+        with:
+          github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
+            setupGlobals(core, github, context, exec, io);
+            const { main } = require('/opt/gh-aw/actions/noop.cjs');
+            await main();
       - name: Record Missing Tool
         id: missing_tool
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -906,7 +932,7 @@ jobs:
           GH_AW_CHECKOUT_PR_SUCCESS: ${{ needs.agent.outputs.checkout_pr_success }}
           GH_AW_INFERENCE_ACCESS_ERROR: ${{ needs.agent.outputs.inference_access_error }}
           GH_AW_GROUP_REPORTS: "false"
-          GH_AW_FAILURE_REPORT_AS_ISSUE: "true"
+          GH_AW_FAILURE_REPORT_AS_ISSUE: "false"
           GH_AW_TIMEOUT_MINUTES: "20"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
@@ -923,6 +949,8 @@ jobs:
           GH_AW_WORKFLOW_NAME: "MSDO Issue Triage Assistant"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
+          GH_AW_NOOP_MESSAGE: ${{ steps.noop.outputs.noop_message }}
+          GH_AW_NOOP_REPORT_AS_ISSUE: "false"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |

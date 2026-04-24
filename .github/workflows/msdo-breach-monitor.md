@@ -1,6 +1,12 @@
 ---
 # MSDO Toolchain Breach Monitor - GitHub Agentic Workflow
 # Nightly supply chain breach monitor for MSDO toolchain dependencies
+#
+# MAINTENANCE NOTE: after running `gh aw compile` with gh-aw v0.61.0, verify
+# that the `actions/github-script` SHA in the generated .lock.yml stays pinned
+# to v9.0.0 (`3a2844b7e9c422d3c10d287c895573f7108da1b3`). v0.61.0's bundled
+# scaffolding emits the older v8 SHA and would silently revert PR #244. See
+# PR #252 for context.
 
 on:
   workflow_dispatch:
@@ -39,7 +45,9 @@ tools:
       - registry.npmjs.org
 
 safe-outputs:
-  noop: false
+  noop:
+    report-as-issue: false
+  report-failure-as-issue: false
   create-issue:
     max: 1
   add-labels:

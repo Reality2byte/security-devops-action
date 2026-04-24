@@ -1,6 +1,12 @@
 ---
 # MSDO Issue Assistant - GitHub Agentic Workflow
 # Automatically triage and respond to issues using wiki knowledge
+#
+# MAINTENANCE NOTE: after running `gh aw compile` with gh-aw v0.61.0, verify
+# that the `actions/github-script` SHA in the generated .lock.yml stays pinned
+# to v9.0.0 (`3a2844b7e9c422d3c10d287c895573f7108da1b3`). v0.61.0's bundled
+# scaffolding emits the older v8 SHA and would silently revert PR #244. See
+# PR #252 for context.
 
 on:
   issues:
@@ -30,7 +36,9 @@ tools:
       - raw.githubusercontent.com
 
 safe-outputs:
-  noop: false
+  noop:
+    report-as-issue: false
+  report-failure-as-issue: false
   add-comment:
     max: 4
   add-labels:
@@ -178,12 +186,13 @@ Keep responses:
    - learn.microsoft.com
    - docs.microsoft.com
    - aka.ms
-3. **Stay on topic** - Only respond to issues related to MSDO, security-devops-action, or the supported security tools. If an issue is unrelated (e.g. general GitHub Actions questions, unrelated security tools, off-topic discussions), do not respond.
-4. **Don't respond** if:
+3. **Stay on topic** - Only respond to issues related to MSDO, security-devops-action, or the supported security tools. If an issue is unrelated (e.g. general GitHub Actions questions, unrelated security tools, off-topic discussions), call `noop` with a reason — see rule 4.
+4. **Call `noop` instead of staying silent** when any of these apply. Pass a one-line reason so the decision is auditable:
    - The issue is not related to MSDO or security-devops-action
+   - The issue title starts with `[aw]` or is labeled `agentic-workflows` (auto-generated failure reports, not user issues)
    - The issue is closed
    - The commenter is not the issue author (unless it's a new issue)
-   - You've already responded twice and there is no new technical information in the latest user message
+   - You have already responded twice and there is no new technical information in the latest user message
    - The issue has a `status:team-review` label (a maintainer is handling it)
 5. **Be honest** - if you don't know something, say so and suggest checking the wiki or waiting for a maintainer
 
@@ -198,16 +207,19 @@ Keep responses:
 **User reports:** "Trivy is failing with container image not found"
 **Response:** This error typically occurs when Docker isn't available. Trivy requires Docker for container scanning. Please ensure you have `docker/setup-buildx-action@v3` in your workflow before the MSDO action. Can you share your workflow YAML so I can help verify the configuration?
 
-## Do NOT Respond Examples
+## Noop Examples
 
 **Off-topic issue:** "How do I set up GitHub Actions for deploying to AWS?"
-→ Do not respond. This is unrelated to MSDO.
+→ Call `noop` with reason "off-topic — unrelated to MSDO".
 
 **Issue labeled `status:team-review`:** Any issue with this label.
-→ Do not respond. A maintainer is already handling it.
+→ Call `noop` with reason "status:team-review — maintainer is handling it".
 
 **Repeated comments with no new info:** User says "Any update?" or "bump" after you already responded.
-→ Do not respond. No new technical information to act on.
+→ Call `noop` with reason "no new technical information since prior response".
 
 **Non-author comment on existing issue:** A third party comments "I have the same problem."
-→ Do not respond. The commenter is not the issue author.
+→ Call `noop` with reason "commenter is not the issue author".
+
+**Workflow failure issue (auto-generated):** Title starts with `[aw]` (e.g. "[aw] MSDO Issue Triage Assistant failed") or labeled `agentic-workflows`.
+→ Call `noop` with reason "auto-generated failure report, not a user issue".

@@ -21,7 +21,7 @@
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
 #
-# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"0de0b4ed23dc52687ceb1b6a9959941b552fe02d240da7798c789c86c45691f5","compiler_version":"v0.61.0","strict":true}
+# gh-aw-metadata: {"schema_version":"v2","frontmatter_hash":"e0a10012ec11f9360eb65d497093ec0ba53c0a1f14cfbb5e21200dcc08055474","compiler_version":"v0.61.0","strict":true}
 
 name: "CI Doctor"
 "on":
@@ -137,7 +137,7 @@ jobs:
           cat "/opt/gh-aw/prompts/safe_outputs_prompt.md"
           cat << 'GH_AW_PROMPT_EOF'
           <safe-output-tools>
-          Tools: add_comment, create_issue, create_pull_request, add_labels, missing_tool, missing_data
+          Tools: add_comment, create_issue, create_pull_request, add_labels, missing_tool, missing_data, noop
           GH_AW_PROMPT_EOF
           cat "/opt/gh-aw/prompts/safe_outputs_create_pull_request.md"
           cat << 'GH_AW_PROMPT_EOF'
@@ -335,7 +335,7 @@ jobs:
           mkdir -p /tmp/gh-aw/safeoutputs
           mkdir -p /tmp/gh-aw/mcp-logs/safeoutputs
           cat > /opt/gh-aw/safeoutputs/config.json << 'GH_AW_SAFE_OUTPUTS_CONFIG_EOF'
-          {"add_comment":{"max":1},"add_labels":{"allowed":["ci-failure","flaky-test","build-failure","dependency-issue","needs-maintainer"],"max":3},"create_issue":{"max":1},"create_pull_request":{"max":1},"missing_data":{},"missing_tool":{}}
+          {"add_comment":{"max":1},"add_labels":{"allowed":["ci-failure","flaky-test","build-failure","dependency-issue","needs-maintainer"],"max":3},"create_issue":{"max":1},"create_pull_request":{"max":1},"missing_data":{},"missing_tool":{},"noop":{"max":1}}
           GH_AW_SAFE_OUTPUTS_CONFIG_EOF
       - name: Write Safe Outputs Tools
         run: |
@@ -502,6 +502,17 @@ jobs:
                   "type": "string",
                   "sanitize": true,
                   "maxLength": 128
+                }
+              }
+            },
+            "noop": {
+              "defaultMax": 1,
+              "fields": {
+                "message": {
+                  "required": true,
+                  "type": "string",
+                  "sanitize": true,
+                  "maxLength": 65000
                 }
               }
             }
@@ -931,6 +942,7 @@ jobs:
       group: "gh-aw-conclusion-ci-doctor"
       cancel-in-progress: false
     outputs:
+      noop_message: ${{ steps.noop.outputs.noop_message }}
       tools_reported: ${{ steps.missing_tool.outputs.tools_reported }}
       total_count: ${{ steps.missing_tool.outputs.total_count }}
     steps:
@@ -951,6 +963,20 @@ jobs:
           mkdir -p /tmp/gh-aw/
           find "/tmp/gh-aw/" -type f -print
           echo "GH_AW_AGENT_OUTPUT=/tmp/gh-aw/agent_output.json" >> "$GITHUB_ENV"
+      - name: Process No-Op Messages
+        id: noop
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          GH_AW_AGENT_OUTPUT: ${{ env.GH_AW_AGENT_OUTPUT }}
+          GH_AW_NOOP_MAX: "1"
+          GH_AW_WORKFLOW_NAME: "CI Doctor"
+        with:
+          github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const { setupGlobals } = require('/opt/gh-aw/actions/setup_globals.cjs');
+            setupGlobals(core, github, context, exec, io);
+            const { main } = require('/opt/gh-aw/actions/noop.cjs');
+            await main();
       - name: Record Missing Tool
         id: missing_tool
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -979,7 +1005,7 @@ jobs:
           GH_AW_CODE_PUSH_FAILURE_ERRORS: ${{ needs.safe_outputs.outputs.code_push_failure_errors }}
           GH_AW_CODE_PUSH_FAILURE_COUNT: ${{ needs.safe_outputs.outputs.code_push_failure_count }}
           GH_AW_GROUP_REPORTS: "false"
-          GH_AW_FAILURE_REPORT_AS_ISSUE: "true"
+          GH_AW_FAILURE_REPORT_AS_ISSUE: "false"
           GH_AW_TIMEOUT_MINUTES: "20"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
@@ -996,6 +1022,8 @@ jobs:
           GH_AW_WORKFLOW_NAME: "CI Doctor"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
+          GH_AW_NOOP_MESSAGE: ${{ steps.noop.outputs.noop_message }}
+          GH_AW_NOOP_REPORT_AS_ISSUE: "false"
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
